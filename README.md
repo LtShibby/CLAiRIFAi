@@ -1,34 +1,34 @@
-<p align="center">
-  <img src="assets/CLAiRIFAi-banner.png" alt="CLAiRiFAi Banner" width="100%" />
-</p>
+# CLAiRiFAi
 
-<h1 align="center">CLAiRiFAi</h1>
+![CLAiRiFAi Banner](assets/CLAiRIFAi-banner.png)
 
-<p align="center">
-  <strong>Meeting transcripts → Engineer-ready tickets</strong><br/>
-  A CLI tool that processes meeting transcripts through a 4-stage Claude Code pipeline to generate structured tickets with acceptance criteria, confidence scoring, and open questions.
-</p>
+Meeting transcripts → Engineer-ready tickets
 
-<p align="center">
-  <img src="https://img.shields.io/badge/node-%3E%3D22-brightgreen" alt="Node 22+" />
-  <img src="https://img.shields.io/badge/typescript-strict-blue" alt="TypeScript Strict" />
-  <img src="https://img.shields.io/badge/powered%20by-Claude%20Code-blueviolet" alt="Powered by Claude Code" />
-</p>
+A CLI tool that processes meeting transcripts through a 4-stage
+Claude Code pipeline to generate structured tickets with acceptance
+criteria, confidence scoring, and open questions.
+
+![Node 22+](https://img.shields.io/badge/node-%3E%3D22-brightgreen)
+![TypeScript Strict](https://img.shields.io/badge/typescript-strict-blue)
+![Powered by Claude Code](https://img.shields.io/badge/powered%20by-Claude%20Code-blueviolet)
 
 ---
 
 ## What It Does
 
-CLAiRiFAi takes a raw meeting transcript and runs it through a 4-stage pipeline:
+CLAiRiFAi takes a raw meeting transcript and runs it through
+a 4-stage pipeline:
 
-| Stage | Input | Output |
-|-------|-------|--------|
-| **Parse** | Raw transcript (txt/srt/vtt) | Structured segments with speakers, types, timestamps |
-| **Extract** | Parsed segments | Draft tickets with acceptance criteria, decisions, open questions |
-| **Clarify** | Draft tickets | Quality review, confidence scores, consolidated blocking questions |
-| **Generate** | Reviewed tickets | Formatted Markdown report with all tickets |
+| Stage        | Input                   | Output                         |
+| ------------ | ----------------------- | ------------------------------ |
+| **Parse**    | Raw transcript          | Structured segments            |
+| **Extract**  | Parsed segments         | Draft tickets + questions      |
+| **Clarify**  | Draft tickets           | Reviewed tickets + confidence  |
+| **Generate** | Reviewed tickets        | Markdown report with tickets   |
 
-Each stage spawns a fresh `claude --print` subprocess. Outputs are validated against Zod schemas and persisted to disk between stages.
+Each stage spawns a fresh `claude --print` subprocess. Outputs
+are validated against Zod schemas and persisted to disk between
+stages.
 
 ## Prerequisites
 
@@ -55,7 +55,7 @@ pnpm start
 
 This launches the interactive menu:
 
-```
+```text
  ██████╗██╗      █████╗ ██╗██████╗ ██╗███████╗ █████╗ ██╗
 ██╔════╝██║     ██╔══██╗██║██╔══██╗██║██╔════╝██╔══██╗██║
 ██║     ██║     ███████║██║██████╔╝██║█████╗  ███████║██║
@@ -78,7 +78,7 @@ What would you like to do?
 # Process a transcript directly
 pnpm start process path/to/transcript.txt
 
-# Continue a previous run (answer open questions, re-generate)
+# Continue a previous run
 pnpm start continue 2026-03-16T10-22-00-sprint-planning
 
 # Push tickets from a completed run
@@ -98,108 +98,84 @@ pnpm start path/to/transcript.txt
 
 ## Application Flows
 
-```
-                              ┌─────────────┐
-                              │   clairifai  │
-                              └──────┬───────┘
-                                     │
-                         ┌───────────┴───────────┐
-                         │  args?                 │
-                         └───┬───────────────┬────┘
-                             │               │
-                          no args        has args
-                             │               │
-                             ▼               ▼
-                      ┌─────────────┐  ┌──────────────────┐
-                      │  Welcome    │  │  Command Router   │
-                      │  Screen     │  │                   │
-                      └──────┬──────┘  │ process <file>    │
-                             │         │ continue <run-id> │
-                             ▼         │ push <run-id>     │
-                      ┌─────────────┐  │ <file> (legacy)   │
-                      │  Main Menu  │  └────────┬──────────┘
-                      └──────┬──────┘           │
-                             │                  │
-           ┌─────────┬──────┴───────┬───────┐  │
-           │         │              │       │   │
-           ▼         ▼              ▼       ▼   │
-      ┌─────────┐ ┌────────┐ ┌─────────┐ ┌───────────┐
-      │ Process │ │Continue│ │  Push   │ │  Run      │
-      │ New     │ │Previous│ │ Tickets │ │  History  │
-      └────┬────┘ └───┬────┘ └────┬────┘ └───────────┘
-           │          │           │
-           ▼          ▼           ▼
+```text
+                        ┌─────────────┐
+                        │  clairifai   │
+                        └──────┬───────┘
+                               │
+                   ┌───────────┴──────────┐
+                   │  args?               │
+                   └───┬─────────────┬────┘
+                       │             │
+                    no args      has args
+                       │             │
+                       ▼             ▼
+                ┌───────────┐  ┌────────────┐
+                │  Welcome  │  │  Command   │
+                │  Screen   │  │  Router    │
+                └─────┬─────┘  └─────┬──────┘
+                      │              │
+                      ▼              │
+                ┌───────────┐        │
+                │ Main Menu │        │
+                └─────┬─────┘        │
+                      │              │
+        ┌────┬────┬───┴───┐          │
+        │    │    │       │          │
+        ▼    ▼    ▼       ▼          ▼
+     Process  Continue  Push  History
 ```
 
 ### Flow 1: Process New Transcript
 
-```
-┌──────────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
-│  Transcript  │────▶│  PARSE   │────▶│ EXTRACT  │────▶│ CLARIFY  │────▶│ GENERATE │
-│  Input       │     │          │     │          │     │          │     │          │
-└──────────────┘     │ claude   │     │ claude   │     │ claude   │     │ claude   │
-                     │ --print  │     │ --print  │     │ --print  │     │ --print  │
-                     └────┬─────┘     └────┬─────┘     └────┬─────┘     └────┬─────┘
-                          │                │                │                │
-                          ▼                ▼                ▼                ▼
-                     Structured       Draft Tickets    Reviewed Tix     report.md
-                     Transcript       + Questions      + Confidence    + Tickets
-                     (JSON)           (JSON)           (JSON)          (Markdown)
-                          │                │                │                │
-                          └────────────────┴────────────────┴────────────────┘
-                                                   │
-                                                   ▼
-                                         .clairifai/runs/<id>/
-                                         (all outputs versioned)
+```text
+Transcript ──▶ PARSE ──▶ EXTRACT ──▶ CLARIFY ──▶ GENERATE
+                 │          │           │            │
+                 ▼          ▼           ▼            ▼
+              Segments   Tickets    Reviewed      report.md
+              (JSON)     (JSON)     (JSON)        (Markdown)
+                 │          │           │            │
+                 └──────────┴───────────┴────────────┘
+                                  │
+                                  ▼
+                        .clairifai/runs/<id>/
+                        (all outputs versioned)
 ```
 
 ### Flow 2: Continue Previous Run
 
-```
-┌───────────────┐     ┌──────────────┐     ┌──────────────┐
-│  Run Selector │────▶│  Question    │────▶│  Re-run      │
-│               │     │  Prompt      │     │  Stages 3+4  │
-│  Pick a run   │     │              │     │              │
-│  with open    │     │  Answer the  │     │  Clarify v2  │
-│  questions    │     │  blocking    │     │  + Generate  │
-└───────────────┘     │  questions   │     │  with answers│
-                      └──────────────┘     └──────┬───────┘
-                                                  │
-                                                  ▼
-                                          Updated report.md
-                                          stage-clarify-v2.json
-                                          (version incremented)
+```text
+Run Selector ──▶ Question Prompt ──▶ Re-run Stages 3+4
+                                            │
+Pick a run        Answer blocking           ▼
+with open         questions          Updated report.md
+questions                            stage-clarify-v2.json
+                                     (version incremented)
 ```
 
 ### Flow 3: Push Tickets
 
-```
-┌───────────────┐     ┌──────────────┐     ┌──────────────┐
-│  Run Selector │────▶│  Push        │────▶│  GitHub /    │
-│               │     │  Options     │     │  Jira        │
-│  Pick a run   │     │              │     │              │
-│  with tickets │     │  Target:     │     │  Creates     │
-└───────────────┘     │  GitHub/Jira │     │  issues with │
-                      │              │     │  labels +    │
-                      │  [ ] Include │     │  body from   │
-                      │  incomplete  │     │  tickets     │
-                      └──────────────┘     └──────────────┘
+```text
+Run Selector ──▶ Push Options ──▶ GitHub / Jira
+                                        │
+Pick a run        Target: GitHub/Jira   ▼
+with tickets      [x] Include           Creates issues
+                  incomplete             with labels
 ```
 
 ### Flow 4: View Run History
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Run History                                                │
-│  3 runs total                                               │
-│                                                             │
-│  Date        Time   Transcript          Tickets  Qs  Status│
-│  2026-03-16  14:22  sprint-planning        5      0  ✓ done│
-│  2026-03-16  10:05  standup                1      0  ✓ done│
-│  2026-03-15  16:30  requirements           3      4  ⏱ open│
-│                                                             │
-│  [↑/↓] scroll  [Esc] back to menu                          │
-└─────────────────────────────────────────────────────────────┘
+```text
+┌─────────────────────────────────────────────┐
+│ Run History — 3 runs total                  │
+│                                             │
+│ Date        Transcript      Tix  Qs  Status │
+│ 2026-03-16  sprint-planning  5    0  ✓ done │
+│ 2026-03-16  standup          1    0  ✓ done │
+│ 2026-03-15  requirements     3    4  ⏱ open │
+│                                             │
+│ [↑/↓] scroll  [Esc] back to menu           │
+└─────────────────────────────────────────────┘
 ```
 
 ---
@@ -208,22 +184,23 @@ pnpm start path/to/transcript.txt
 
 Every run creates a folder at `.clairifai/runs/<timestamp>-<name>/`:
 
-```
+```text
 .clairifai/runs/2026-03-16T10-22-00-sprint-planning/
 ├── status.json              # Pipeline progress
 ├── transcript.txt           # Original input (preserved)
 ├── versions.json            # Version history manifest
-├── stage-parse-v1.json      # Structured transcript segments
+├── stage-parse-v1.json      # Structured segments
 ├── stage-extract-v1.json    # Extracted tickets (JSON)
 ├── stage-clarify-v1.json    # Reviewed tickets + questions
-├── stage-clarify-v2.json    # After answering questions (versioned)
+├── stage-clarify-v2.json    # After answering questions
 ├── report.md                # Final formatted report
 └── log.txt                  # Subprocess log
 ```
 
 ## Configuration
 
-Configuration lives in `.clairifai.json` at the project root. Auto-generated with defaults on first run.
+Configuration lives in `.clairifai.json` at the project root.
+Auto-generated with defaults on first run.
 
 ```json
 {
@@ -245,57 +222,57 @@ Configuration lives in `.clairifai.json` at the project root. Auto-generated wit
 }
 ```
 
-| Key | Description |
-|-----|-------------|
-| `repo` | GitHub `owner/repo` for issue creation (optional) |
-| `outputFormat` | `markdown`, `jira-json`, or `both` |
-| `timeouts` | Per-stage timeout in seconds |
-| `maxTranscriptTokens` | Max estimated tokens before rejection |
-| `ticketDefaults` | Ticket formatting preferences |
-| `confidenceThreshold` | Minimum confidence to mark tickets as READY |
+| Key                    | Description                              |
+| ---------------------- | ---------------------------------------- |
+| `repo`                 | GitHub `owner/repo` for issues (optional)|
+| `outputFormat`         | `markdown`, `jira-json`, or `both`       |
+| `timeouts`             | Per-stage timeout in seconds             |
+| `maxTranscriptTokens`  | Max estimated tokens before rejection    |
+| `ticketDefaults`       | Ticket formatting preferences            |
+| `confidenceThreshold`  | Minimum confidence to mark as READY      |
 
 ## Features
 
-- **Interactive menu** — Arrow-key driven UI with 5 main flows
+- **Interactive menu** — Arrow-key driven UI, 5 main flows
 - **4-stage pipeline** — Parse → Extract → Clarify → Generate
-- **Confidence scoring** — Each ticket rated HIGH / MEDIUM / LOW with explicit factors
-- **Open questions** — Ambiguities surfaced as BLOCKING / IMPORTANT / NICE_TO_HAVE
-- **Clarification loop** — Answer blocking questions, re-run stages 3+4 with new version
-- **Versioned outputs** — Every stage output is versioned, nothing is overwritten
-- **Continue previous runs** — Pick up where you left off, answer open questions
-- **Push to GitHub** — Create labeled issues from any completed run
-- **Run history** — Browse all past runs with status, ticket counts, question counts
-- **Interactive retry** — Timeout or failure? Retry with extended timeout, skip, or abort
-- **Ink terminal UI** — Real-time progress, streaming Claude output, keyboard navigation
-- **Prompt injection protection** — All external content wrapped in XML data tags
+- **Confidence scoring** — HIGH / MEDIUM / LOW with factors
+- **Open questions** — BLOCKING / IMPORTANT / NICE_TO_HAVE
+- **Clarification loop** — Answer questions, re-run stages 3+4
+- **Versioned outputs** — Nothing is overwritten
+- **Continue previous runs** — Pick up where you left off
+- **Push to GitHub** — Labeled issues from any completed run
+- **Run history** — Browse past runs with stats
+- **Interactive retry** — Retry with extended timeout or abort
+- **Ink terminal UI** — Real-time progress, streaming output
+- **Injection protection** — External content in XML data tags
 
 ## Architecture
 
-```
-┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-│  PARSE   │───▶│ EXTRACT  │───▶│ CLARIFY  │───▶│ GENERATE │
-│          │    │          │    │          │    │          │
-│Transcript│    │ Tickets  │    │ Open Qs  │    │  Output  │
-│   + ID   │    │  Draft   │    │  Check   │    │  Format  │
-└──────────┘    └──────────┘    └──────────┘    └──────────┘
-     │               │               │               │
-     ▼               ▼               ▼               ▼
-subprocess 1    subprocess 2    subprocess 3    subprocess 4
-claude --print  claude --print  claude --print  claude --print
+```text
+┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
+│  PARSE   │──▶│ EXTRACT  │──▶│ CLARIFY  │──▶│ GENERATE │
+│          │   │          │   │          │   │          │
+│Transcript│   │ Tickets  │   │ Open Qs  │   │  Output  │
+│   + ID   │   │  Draft   │   │  Check   │   │  Format  │
+└──────────┘   └──────────┘   └──────────┘   └──────────┘
+     │              │              │              │
+     ▼              ▼              ▼              ▼
+subprocess 1   subprocess 2  subprocess 3   subprocess 4
+claude --print claude --print claude --print claude --print
 ```
 
 ## Tech Stack
 
 - **Runtime:** Node.js 22+
 - **Language:** TypeScript (strict mode, ESM)
-- **CLI UI:** [Ink](https://github.com/vadimdemedes/ink) (React for terminals)
+- **CLI UI:** [Ink](https://github.com/vadimdemedes/ink)
 - **Validation:** [Zod](https://zod.dev)
 - **LLM:** Claude Code CLI subprocess (`claude --print`)
-- **GitHub:** [Octokit](https://github.com/octokit/rest.js) (optional)
+- **GitHub:** [Octokit](https://github.com/octokit/rest.js)
 
 ## Project Structure
 
-```
+```text
 src/
   index.tsx              # CLI entry point + command router
   config.ts              # Zod config loading
@@ -303,7 +280,7 @@ src/
   errors.ts              # Error catalog
   preflight.ts           # Startup checks
   agent/
-    runner.ts            # Pipeline orchestrator + continue support
+    runner.ts            # Pipeline orchestrator
     stage-runner.ts      # Subprocess spawner
     watcher.ts           # Stdout collector
     json-extractor.ts    # Robust JSON extraction
@@ -317,19 +294,19 @@ src/
   ui/
     App.tsx              # Pipeline progress view
     Welcome.tsx          # Startup screen with banner
-    MainMenu.tsx         # Interactive main menu (5 options)
+    MainMenu.tsx         # Interactive main menu
     RunSelector.tsx      # Browse + select past runs
     RunHistory.tsx       # Read-only run history table
-    ContinueFlow.tsx     # Answer questions + re-run stages 3+4
-    PushOptions.tsx      # Target selection + push tickets
+    ContinueFlow.tsx     # Answer questions + re-run
+    PushOptions.tsx      # Target selection + push
     StageRow.tsx         # Per-stage status row
     LiveLog.tsx          # Streaming output panel
-    QuestionPrompt.tsx   # Interactive Q&A for open questions
+    QuestionPrompt.tsx   # Interactive Q&A
     TicketPreview.tsx    # Final ticket review
     RetryPrompt.tsx      # Timeout/failure recovery
     TranscriptInput.tsx  # File path input
   github/
-    issues.ts            # GitHub Issue creation via Octokit
+    issues.ts            # GitHub Issue creation
 ```
 
 ## License
@@ -338,6 +315,4 @@ MIT
 
 ---
 
-<p align="center">
-  Powered by Claude Code
-</p>
+Powered by Claude Code
