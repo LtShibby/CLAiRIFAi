@@ -1,0 +1,21 @@
+CTO: I want to discuss the database migration. We need to move from MySQL to PostgreSQL.
+VP_Eng: I disagree. MySQL is fine for our needs. A migration would take months and risk data loss.
+CTO: PostgreSQL has better JSON support and we're moving toward more document-like structures.
+VP_Eng: We could use MySQL's JSON columns. They've been stable since 5.7.
+CTO: The query performance on JSON in Postgres is significantly better. I've seen the benchmarks.
+VP_Eng: Benchmarks don't account for our specific data patterns. And we have 200 stored procedures that would need to be rewritten.
+CTO: Fair point on the stored procedures. Could we do a gradual migration?
+VP_Eng: A gradual migration means maintaining two databases, which is even worse.
+Dev_Lead: What if we use Postgres for new services and keep MySQL for existing ones?
+CTO: I like that approach. New microservices on Postgres, existing monolith stays on MySQL.
+VP_Eng: That means our team needs to be proficient in both databases. That's a training cost.
+CTO: It's an investment in our future stack. The industry is moving toward Postgres.
+VP_Eng: I'm not opposed to Postgres for new services, but I want it documented that the existing MySQL infrastructure stays as-is for at least 12 months.
+CTO: Deal. But I want all new services to default to Postgres starting next quarter.
+Dev_Lead: We should also establish Postgres guidelines and best practices before teams start using it.
+CTO: Good idea. Can you own that?
+Dev_Lead: Sure. I'll draft guidelines by end of month.
+VP_Eng: One more thing — who's handling the operational side? Our DBA team only knows MySQL.
+CTO: We'll need to hire a Postgres DBA or train the existing team. I'll talk to HR.
+VP_Eng: Make sure it's hired, not just trained. We need someone with production Postgres experience.
+CTO: Agreed. Let's move on to the next topic.

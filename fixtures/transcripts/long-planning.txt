@@ -1,0 +1,28 @@
+Sarah: Alright everyone, let's kick off the sprint planning for the checkout redesign. We have a lot to cover today.
+David: Sounds good. I've been looking at the current checkout flow and I think we should move to a single-page design.
+Lisa: From a UX perspective, I agree. The current multi-step flow has a 40% drop-off rate at step 3.
+Sarah: That's significant. David, what would the single-page approach look like technically?
+David: We'd consolidate shipping, payment, and confirmation into one scrollable page. Real-time validation as users fill in fields. The main challenge is the payment provider integration — we'd need to lazy-load the payment form.
+Lisa: I'd want to make sure we have proper error states. Inline validation errors, not just a banner at the top.
+Sarah: Agreed. What about mobile? Our mobile traffic is 60% of checkout.
+Lisa: I'll create responsive mockups. On mobile, we could use a collapsible accordion instead of showing everything at once.
+David: That's a good approach. We should also consider the guest checkout flow — right now it's a separate path.
+Sarah: Let's keep guest checkout as a separate ticket. I don't want to scope creep.
+David: Fair enough. What about the payment methods? We currently support credit cards and PayPal.
+Sarah: Product wants us to add Apple Pay and Google Pay in this sprint.
+David: That's going to add complexity. The payment provider SDK supports them, but we need to handle the different UX flows.
+Lisa: Each payment method has its own button and sheet. I can design those.
+Sarah: Let's create separate tickets for each payment method addition. David, how long do you think the base checkout redesign would take?
+David: With the single-page flow and inline validation, probably 2 sprints if we don't include the new payment methods.
+Sarah: That's tight. Can we do the base redesign in sprint 1 and payment methods in sprint 2?
+David: That works. We should also investigate the address autocomplete API. I'm not sure which provider to use.
+Sarah: That sounds like a spike. Can you timebox that to 2 days?
+David: Sure. I'll research Google Places API vs Mapbox vs Smarty Streets.
+Lisa: One more thing — we need to handle the coupon code flow. Right now it's confusing. Users don't know where to enter it.
+Sarah: Good call. Let's add that to the redesign scope. The coupon input should be prominently placed.
+David: I was thinking we could put it right above the order summary.
+Lisa: That works. I'll include it in the mockups.
+Sarah: Alright, let me summarize the action items. David, you'll spike on address autocomplete this week. Lisa, you'll create the checkout redesign mockups including mobile views. I'll write up the tickets based on this discussion.
+David: One concern — we should make sure the error messages are reviewed by UX before we implement them.
+Lisa: Definitely. I'll add error message copy to my mockups. I should have those ready by Thursday.
+Sarah: Perfect. Anything else? No? Let's wrap up then. Good discussion everyone.

@@ -1,0 +1,18 @@
+{
+	"outputFormat": "markdown",
+	"timeouts": {
+		"parse": 120,
+		"extract": 240,
+		"clarify": 240,
+		"generate": 120
+	},
+	"maxTranscriptTokens": 100000,
+	"claudeFlags": ["--print"],
+	"ticketDefaults": {
+		"userStoryFormat": "as-a-i-want",
+		"acceptanceCriteriaFormat": "given-when-then",
+		"includeTechnicalNotes": true,
+		"includeOutOfScope": true
+	},
+	"confidenceThreshold": "MEDIUM"
+}

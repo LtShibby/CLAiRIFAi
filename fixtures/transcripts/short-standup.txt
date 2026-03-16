@@ -1,0 +1,10 @@
+Sarah: Good morning everyone. Let's do a quick standup.
+David: Morning. Yesterday I finished the API endpoint for user profiles. Today I'll start on the profile page UI.
+Sarah: Great. Any blockers?
+David: Not really, but I noticed the user avatar upload is broken in staging. It returns a 500 error.
+Sarah: That sounds like a bug. Can you create a ticket for that?
+David: Sure, I'll look into it after the UI work.
+Sarah: Actually, let's prioritize the bug fix. Users are reporting it in support.
+David: Okay, I'll fix the avatar upload first thing.
+Sarah: Thanks. I'll be working on the sprint planning doc today. That's it from me.
+David: Sounds good. Talk later.

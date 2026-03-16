@@ -1,0 +1,30 @@
+PM: We need to add a notification system to the app.
+Dev1: What kind of notifications? Push? Email? In-app?
+PM: All of them, eventually. But let's start with... I'm not sure. What do you think?
+Dev1: Well, in-app is easiest to implement. Push requires a service worker setup. Email needs a provider.
+Dev2: I think we should start with email because that's what users have been requesting.
+PM: Users have been requesting push notifications too, actually.
+Dev1: Do we have data on which is more requested?
+PM: Not really. The support team mentioned both. Maybe we should do push first because it's more engaging?
+Dev2: But push notifications have higher development cost and we need to handle permissions.
+PM: Okay, how about we do both in parallel?
+Dev1: That doubles the work. We don't have capacity for that.
+PM: Right. Okay, let's figure this out later. What about the notification content?
+Dev2: What triggers a notification?
+PM: New messages, friend requests, maybe when someone likes your post?
+Dev1: "Maybe"? We need to decide this upfront.
+PM: Let's do new messages and friend requests for sure. Likes... I need to check with the design team.
+Dev2: Should notifications be real-time or batched?
+PM: What do you mean?
+Dev2: Like, do we send a push notification for every single message, or batch them? "You have 5 new messages."
+PM: Oh, good question. I think real-time for direct messages and batched for everything else? Or maybe... hmm.
+Dev1: We should also think about notification preferences. Users should be able to opt out of specific types.
+PM: Yes, definitely. That's required for compliance anyway.
+Dev2: What about the notification center? Do we need a page where users can see all their past notifications?
+PM: Yes, with read/unread status. And the ability to mark all as read.
+Dev1: How far back should the history go?
+PM: I don't know. 30 days? 90 days? What's standard?
+Dev2: Most apps do 30 days for the UI but keep data longer in the database.
+PM: Let's go with 30 days visible. Okay, I think we have enough to start. Let's reconvene next week.
+Dev1: Wait, we haven't decided on push vs email for v1.
+PM: Right. Let me talk to the design team and get back to you by Wednesday.
