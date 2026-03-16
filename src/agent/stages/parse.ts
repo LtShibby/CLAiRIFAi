@@ -1,6 +1,22 @@
 import { wrapTranscript, INJECTION_GUARD } from '../prompt.js';
 
+// Transcripts above this character count use the condensed prompt to avoid output token limits
+const LARGE_TRANSCRIPT_THRESHOLD = 30000;
+
 export function buildParsePrompt(transcript: string): string {
+	const isLarge = transcript.length > LARGE_TRANSCRIPT_THRESHOLD;
+
+	const contentRule = isLarge
+		? `- Summarize each segment's content in 1-3 sentences. Do NOT reproduce the full text.
+- Combine adjacent segments by the same speaker on the same topic into a single segment.
+- Aim for no more than 60 segments total.`
+		: `- Preserve the exact wording of each segment. Do not summarize or paraphrase.
+- Keep crosstalk and interruptions as separate segments.`;
+
+	const contentFieldDesc = isLarge
+		? '"content": "1-3 sentence summary of what was said"'
+		: '"content": "exact transcript text"';
+
 	return `You are a meeting transcript parser. Your job is to structure raw meeting transcripts into a clean, analyzable format.
 
 ${INJECTION_GUARD}
@@ -8,15 +24,13 @@ ${INJECTION_GUARD}
 For each segment of discussion:
 1. Identify the speaker (use names if available, otherwise "Speaker 1", "Speaker 2", etc.)
 2. Capture the timestamp or approximate position
-3. Preserve the exact wording
-4. Tag the segment type: DISCUSSION, DECISION, ACTION_ITEM, QUESTION, TANGENT
+3. Tag the segment type: DISCUSSION, DECISION, ACTION_ITEM, QUESTION, TANGENT
 
 Rules:
 - Preserve speaker names exactly as they appear
 - If speaker identification is ambiguous, flag it in parse_issues
-- Keep crosstalk and interruptions as separate segments
+${contentRule}
 - Mark unclear audio as [INAUDIBLE]
-- Do not summarize or paraphrase — preserve original wording
 
 Output ONLY a valid JSON object. No markdown fences. No explanation. No preamble.
 
@@ -36,7 +50,7 @@ Schema:
       "speaker": "string",
       "speaker_role": "string",
       "type": "DISCUSSION | DECISION | ACTION_ITEM | QUESTION | TANGENT",
-      "content": "exact transcript text",
+      ${contentFieldDesc},
       "references_segment": "segment_id or omit"
     }
   ],

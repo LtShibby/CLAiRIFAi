@@ -5,9 +5,9 @@ import type { ClairifaiConfig } from './types.js';
 import { createError } from './errors.js';
 
 const timeoutSchema = z.object({
-	parse: z.number().positive().default(120),
-	extract: z.number().positive().default(240),
-	clarify: z.number().positive().default(240),
+	parse: z.number().positive().default(300),
+	extract: z.number().positive().default(300),
+	clarify: z.number().positive().default(300),
 	generate: z.number().positive().default(300),
 });
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import React, { useState } from 'react';
-import { render, useApp } from 'ink';
+import { render, useApp, Text } from 'ink';
 import { readFile } from 'node:fs/promises';
 import { loadConfig } from './config.js';
 import { runPreflightChecks, validateTranscript } from './preflight.js';
@@ -108,7 +108,7 @@ function InteractiveApp({ config }: { config: ClairifaiConfig }) {
 			return (
 				<>
 					{preflightError && (
-						<>{preflightError}{'\n'}</>
+						<Text color="red">{preflightError}</Text>
 					)}
 					<TranscriptInput onSubmit={(p) => void handleTranscriptSubmit(p)} />
 				</>

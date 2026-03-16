@@ -1,13 +1,15 @@
 {
 	"outputFormat": "markdown",
 	"timeouts": {
-		"parse": 120,
-		"extract": 240,
-		"clarify": 240,
+		"parse": 300,
+		"extract": 300,
+		"clarify": 300,
 		"generate": 300
 	},
 	"maxTranscriptTokens": 100000,
-	"claudeFlags": ["--print"],
+	"claudeFlags": [
+		"--print"
+	],
 	"ticketDefaults": {
 		"userStoryFormat": "as-a-i-want",
 		"acceptanceCriteriaFormat": "given-when-then",
