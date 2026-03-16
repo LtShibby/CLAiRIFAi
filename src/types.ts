@@ -222,6 +222,21 @@ export type ClairifaiConfig = {
 	confidenceThreshold: Confidence;
 };
 
+// ─── Run summary (for menu-driven UI) ───
+
+export type RunSummary = {
+	runId: string;
+	folder: string;
+	transcriptName: string;
+	status: string;
+	lastStage: string;
+	updatedAt: string;
+	completedStages: string[];
+	ticketCount: number;
+	questionCount: number;
+	hasReport: boolean;
+};
+
 // ─── Error types ───
 
 export type ErrorCode =

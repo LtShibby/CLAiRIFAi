@@ -18,7 +18,7 @@ import { extractionResultSchema } from './schemas/extracted-tickets.js';
 import { clarifyResultSchema } from './schemas/reviewed-tickets.js';
 import { buildParsePrompt } from './stages/parse.js';
 import { buildExtractPrompt } from './stages/extract.js';
-import { buildClarifyPrompt } from './stages/clarify.js';
+import { buildClarifyPrompt, buildClarifyPromptWithAnswers } from './stages/clarify.js';
 import { buildGeneratePrompt } from './stages/generate.js';
 import { createError } from '../errors.js';
 
@@ -210,6 +210,74 @@ export async function processTranscript(
 	const progressEntry: ProgressEntry = {
 		timestamp: new Date().toISOString(),
 		transcriptPath,
+		runFolder: folder,
+		ticketsGenerated: extracted.tickets.length,
+		questionsRemaining: reviewed.summary.blocking_questions + reviewed.summary.important_questions,
+		status: 'completed',
+	};
+	await appendProgress(process.cwd(), progressEntry);
+
+	return {
+		report: reportRaw,
+		folder,
+		ticketsGenerated: extracted.tickets.length,
+		questionsRemaining: reviewed.summary.blocking_questions,
+		extracted,
+		reviewed,
+	};
+}
+
+/**
+ * Re-run stages 3 (clarify) and 4 (generate) for an existing run,
+ * incorporating user answers to previously open questions.
+ */
+export async function continueFromClarify(
+	folder: string,
+	extracted: ExtractionResult,
+	previousReview: ClarifyResult,
+	answers: Record<string, string>,
+	config: ClairifaiConfig,
+	callbacks: PipelineCallbacks,
+): Promise<PipelineResult> {
+	let manifest = await loadVersionManifest(folder);
+
+	// ── Stage 3: Re-Clarify with answers ──
+	const clarifyVersion = getNextVersion(manifest, 'clarify');
+	const answeredIds = Object.keys(answers);
+	await writeStatus(folder, { stage: 'clarify', status: 'running', version: clarifyVersion });
+	const clarifyPrompt = buildClarifyPromptWithAnswers(extracted, previousReview, answers);
+	const clarifyRaw = await runStageWithRetry('clarify', clarifyPrompt, config, callbacks);
+	if (!clarifyRaw) {
+		throw createError('STAGE_FAILED', 'Stage "clarify" was skipped during continue');
+	}
+	const reviewed = validateStageOutput<ClarifyResult>(clarifyRaw, clarifyResultSchema, 'clarify');
+	const clarifyFilename = await recordVersion(folder, 'clarify', clarifyVersion, answeredIds);
+	await writeStageOutput(folder, clarifyFilename, JSON.stringify(reviewed, null, 2));
+	await writeStatus(folder, { stage: 'clarify', status: 'done', version: clarifyVersion });
+
+	// ── Stage 4: Re-Generate ──
+	await writeStatus(folder, { stage: 'generate', status: 'running' });
+	const generatePrompt = buildGeneratePrompt(extracted, reviewed, config);
+	const reportRaw = await runStageWithRetry('generate', generatePrompt, config, callbacks);
+	if (!reportRaw) {
+		throw createError('STAGE_FAILED', 'Stage "generate" was skipped during continue');
+	}
+
+	const { valid, error: reportError, warnings } = validateReportStructure(reportRaw);
+	if (!valid && reportError) {
+		throw reportError;
+	}
+	for (const warning of warnings) {
+		await appendLog(folder, `WARNING: ${warning}\n`);
+	}
+
+	await writeStageOutput(folder, 'report.md', reportRaw);
+	await writeStatus(folder, { stage: 'generate', status: 'done' });
+
+	// Record progress
+	const progressEntry: ProgressEntry = {
+		timestamp: new Date().toISOString(),
+		transcriptPath: folder,
 		runFolder: folder,
 		ticketsGenerated: extracted.tickets.length,
 		questionsRemaining: reviewed.summary.blocking_questions + reviewed.summary.important_questions,
