@@ -8,7 +8,7 @@ const timeoutSchema = z.object({
 	parse: z.number().positive().default(120),
 	extract: z.number().positive().default(240),
 	clarify: z.number().positive().default(240),
-	generate: z.number().positive().default(120),
+	generate: z.number().positive().default(300),
 });
 
 const configSchema = z.object({

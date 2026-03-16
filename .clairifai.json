@@ -4,7 +4,7 @@
 		"parse": 120,
 		"extract": 240,
 		"clarify": 240,
-		"generate": 120
+		"generate": 300
 	},
 	"maxTranscriptTokens": 100000,
 	"claudeFlags": ["--print"],

@@ -5,6 +5,7 @@ import type {
 	ParsedTranscript,
 	ExtractionResult,
 	ClarifyResult,
+	ClairifaiError,
 } from '../types.js';
 import { runStage, killActiveProcess, type StageCallbacks } from './stage-runner.js';
 import { createRunFolder, writeStageOutput, writeStatus, appendLog } from '../state/manager.js';
@@ -48,6 +49,19 @@ function validateStageOutput<T>(
 	return result.data;
 }
 
+export type RetryAction = 'retry' | 'skip' | 'abort';
+
+export type RetryRequest = {
+	stage: PipelineStage;
+	reason: 'timeout' | 'failed';
+	timeoutSeconds: number;
+	error: ClairifaiError;
+};
+
+export type PipelineCallbacks = StageCallbacks & {
+	onRetryNeeded: (request: RetryRequest) => Promise<RetryAction>;
+};
+
 export type PipelineResult = {
 	report: string;
 	folder: string;
@@ -57,11 +71,58 @@ export type PipelineResult = {
 	reviewed: ClarifyResult;
 };
 
+/**
+ * Run a stage with retry support. On timeout/failure, asks the UI what to do.
+ * Returns the raw output string, or null if skipped.
+ */
+async function runStageWithRetry(
+	stage: PipelineStage,
+	prompt: string,
+	config: ClairifaiConfig,
+	callbacks: PipelineCallbacks,
+): Promise<string | null> {
+	let currentTimeout = config.timeouts[stage];
+
+	// eslint-disable-next-line no-constant-condition
+	while (true) {
+		// Build a config copy with the current (possibly extended) timeout
+		const stageConfig: ClairifaiConfig = {
+			...config,
+			timeouts: { ...config.timeouts, [stage]: currentTimeout },
+		};
+
+		try {
+			return await runStage(stage, prompt, stageConfig, callbacks);
+		} catch (err) {
+			const clairifaiErr = err as ClairifaiError;
+			const isTimeout = clairifaiErr.code === 'STAGE_TIMEOUT';
+
+			const action = await callbacks.onRetryNeeded({
+				stage,
+				reason: isTimeout ? 'timeout' : 'failed',
+				timeoutSeconds: currentTimeout,
+				error: clairifaiErr,
+			});
+
+			if (action === 'retry') {
+				// Extend timeout by 1.5x on retry
+				currentTimeout = Math.round(currentTimeout * 1.5);
+				continue;
+			} else if (action === 'skip') {
+				return null;
+			} else {
+				// abort
+				throw clairifaiErr;
+			}
+		}
+	}
+}
+
 export async function processTranscript(
 	transcriptPath: string,
 	transcriptContent: string,
 	config: ClairifaiConfig,
-	callbacks: StageCallbacks,
+	callbacks: PipelineCallbacks,
 ): Promise<PipelineResult> {
 	const folder = await createRunFolder(transcriptPath);
 
@@ -88,7 +149,10 @@ export async function processTranscript(
 	const parseVersion = getNextVersion(manifest, 'parse');
 	await writeStatus(folder, { stage: 'parse', status: 'running', version: parseVersion });
 	const parsePrompt = buildParsePrompt(transcriptContent);
-	const parseRaw = await runStage('parse', parsePrompt, config, callbacks);
+	const parseRaw = await runStageWithRetry('parse', parsePrompt, config, callbacks);
+	if (!parseRaw) {
+		throw createError('STAGE_FAILED', 'Stage "parse" was skipped — cannot continue without parsed transcript');
+	}
 	const parsed = validateStageOutput<ParsedTranscript>(parseRaw, parsedTranscriptSchema, 'parse');
 	const parseFilename = await recordVersion(folder, 'parse', parseVersion);
 	await writeStageOutput(folder, parseFilename, JSON.stringify(parsed, null, 2));
@@ -99,7 +163,10 @@ export async function processTranscript(
 	const extractVersion = getNextVersion(manifest, 'extract');
 	await writeStatus(folder, { stage: 'extract', status: 'running', version: extractVersion });
 	const extractPrompt = buildExtractPrompt(parsed, config.ticketDefaults);
-	const extractRaw = await runStage('extract', extractPrompt, config, callbacks);
+	const extractRaw = await runStageWithRetry('extract', extractPrompt, config, callbacks);
+	if (!extractRaw) {
+		throw createError('STAGE_FAILED', 'Stage "extract" was skipped — cannot continue without extracted tickets');
+	}
 	const extracted = validateStageOutput<ExtractionResult>(extractRaw, extractionResultSchema, 'extract');
 	const extractFilename = await recordVersion(folder, 'extract', extractVersion);
 	await writeStageOutput(folder, extractFilename, JSON.stringify(extracted, null, 2));
@@ -110,7 +177,10 @@ export async function processTranscript(
 	const clarifyVersion = getNextVersion(manifest, 'clarify');
 	await writeStatus(folder, { stage: 'clarify', status: 'running', version: clarifyVersion });
 	const clarifyPrompt = buildClarifyPrompt(extracted);
-	const clarifyRaw = await runStage('clarify', clarifyPrompt, config, callbacks);
+	const clarifyRaw = await runStageWithRetry('clarify', clarifyPrompt, config, callbacks);
+	if (!clarifyRaw) {
+		throw createError('STAGE_FAILED', 'Stage "clarify" was skipped — cannot continue without review');
+	}
 	const reviewed = validateStageOutput<ClarifyResult>(clarifyRaw, clarifyResultSchema, 'clarify');
 	const clarifyFilename = await recordVersion(folder, 'clarify', clarifyVersion);
 	await writeStageOutput(folder, clarifyFilename, JSON.stringify(reviewed, null, 2));
@@ -119,10 +189,13 @@ export async function processTranscript(
 	// ── Stage 4: Generate ──
 	await writeStatus(folder, { stage: 'generate', status: 'running' });
 	const generatePrompt = buildGeneratePrompt(extracted, reviewed, config);
-	const report = await runStage('generate', generatePrompt, config, callbacks);
+	const reportRaw = await runStageWithRetry('generate', generatePrompt, config, callbacks);
+	if (!reportRaw) {
+		throw createError('STAGE_FAILED', 'Stage "generate" was skipped — no report produced');
+	}
 
 	// Validate report structure
-	const { valid, error: reportError, warnings } = validateReportStructure(report);
+	const { valid, error: reportError, warnings } = validateReportStructure(reportRaw);
 	if (!valid && reportError) {
 		throw reportError;
 	}
@@ -130,7 +203,7 @@ export async function processTranscript(
 		await appendLog(folder, `WARNING: ${warning}\n`);
 	}
 
-	await writeStageOutput(folder, 'report.md', report);
+	await writeStageOutput(folder, 'report.md', reportRaw);
 	await writeStatus(folder, { stage: 'generate', status: 'done' });
 
 	// Record progress
@@ -145,7 +218,7 @@ export async function processTranscript(
 	await appendProgress(process.cwd(), progressEntry);
 
 	return {
-		report,
+		report: reportRaw,
 		folder,
 		ticketsGenerated: extracted.tickets.length,
 		questionsRemaining: reviewed.summary.blocking_questions,
