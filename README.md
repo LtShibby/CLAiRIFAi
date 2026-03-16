@@ -206,9 +206,9 @@ Auto-generated with defaults on first run.
 {
   "outputFormat": "markdown",
   "timeouts": {
-    "parse": 120,
-    "extract": 240,
-    "clarify": 240,
+    "parse": 300,
+    "extract": 300,
+    "clarify": 300,
     "generate": 300
   },
   "maxTranscriptTokens": 100000,
@@ -235,6 +235,8 @@ Auto-generated with defaults on first run.
 
 - **Interactive menu** — Arrow-key driven UI, 5 main flows
 - **4-stage pipeline** — Parse → Extract → Clarify → Generate
+- **Large transcript support** — Auto-condenses parse prompt for
+  transcripts over 30k characters to stay within output limits
 - **Confidence scoring** — HIGH / MEDIUM / LOW with factors
 - **Open questions** — BLOCKING / IMPORTANT / NICE_TO_HAVE
 - **Clarification loop** — Answer questions, re-run stages 3+4
