@@ -1,0 +1,264 @@
+Sprint Planning — Checkout Redesign
+Date: March 14, 2026
+Duration: 47 minutes
+
+Attendees:
+- Sarah Chen (Product Manager)
+- David Kim (Engineering Lead)
+- Lisa Park (UX Designer)
+- Marcus Johnson (Backend Engineer)
+- Priya Sharma (Frontend Engineer)
+
+---
+
+[00:00:12]
+Sarah: Alright, let's get started. Today we're planning the checkout redesign sprint. The main goal is to reduce cart abandonment — we're currently at 68% which is way above industry average.
+
+[00:00:31]
+David: Before we dive in, I want to flag that we have some technical debt in the cart service that might slow us down. The cart state management is a mess — we're still using that legacy Redux setup from three years ago.
+
+[00:00:45]
+Sarah: Noted. Let's come back to that. Lisa, can you walk us through the new design?
+
+[00:00:52]
+Lisa: Sure. The big change is moving from a multi-step checkout to a single-page checkout. User research showed that every additional page loses us about 12% of users. So we're consolidating shipping, payment, and review into one scrollable page.
+
+[00:01:15]
+Priya: That's a big change for the frontend. Are we keeping the existing component library or rebuilding?
+
+[00:01:22]
+Lisa: Ideally we'd use the existing components, but some of them don't support the new layout. The address form component especially — it's not responsive.
+
+[00:01:35]
+David: We should create a ticket to audit which components need updates. Priya, can you own that?
+
+[00:01:42]
+Priya: Yeah, I can do that. Probably a day or two of work to go through everything.
+
+[00:01:48]
+Sarah: Great. So the main feature is single-page checkout. What are the acceptance criteria we need?
+
+[00:02:01]
+Lisa: Users should be able to see their cart summary, enter shipping address, select shipping method, enter payment info, and place the order — all without page navigation.
+
+[00:02:15]
+Marcus: What about users with saved addresses and payment methods? Do we auto-populate?
+
+[00:02:22]
+Sarah: Yes, definitely. Returning customers should have their default address and payment pre-selected.
+
+[00:02:30]
+David: That means we need to hit the customer profile service. Last time I checked, their API was pretty slow — like 800ms on average.
+
+[00:02:40]
+Marcus: We could fetch that data optimistically when the user opens their cart, not when they click checkout. That way it's already cached.
+
+[00:02:50]
+Sarah: I like that. Let's do it.
+
+[00:02:55]
+Lisa: One thing from UX — we need inline validation for all form fields. Users shouldn't have to submit to find out their credit card number is invalid.
+
+[00:03:08]
+Priya: Makes sense. We'll need to integrate with a card validation library. I've used Stripe's before — it's pretty good.
+
+[00:03:18]
+David: Are we using Stripe for payments? I thought we were still on Braintree.
+
+[00:03:25]
+Sarah: We're actually evaluating switching to Stripe. But for this sprint, let's assume Braintree. We can swap the payment provider later — that should be a separate initiative.
+
+[00:03:38]
+Marcus: So payment provider is out of scope for this sprint?
+
+[00:03:42]
+Sarah: Correct. Braintree stays, we just need to make sure the new UI works with it.
+
+[00:03:50]
+Lisa: What about error handling? If the payment fails, what's the experience?
+
+[00:03:57]
+David: Good question. Right now we show a generic error modal. It's pretty bad.
+
+[00:04:03]
+Lisa: Yeah, I've designed a new error state. Inline error message below the payment section, with a clear explanation and a retry button. We should also preserve all the form data so users don't have to re-enter everything.
+
+[00:04:20]
+Priya: That's important. The current behavior clears the form on error which is infuriating.
+
+[00:04:28]
+Sarah: Okay, so we have: single-page checkout, auto-populated customer data, inline validation, and better error handling. What else?
+
+[00:04:42]
+Marcus: What about guest checkout? Right now you have to create an account.
+
+[00:04:48]
+Sarah: That's a great point. Yes, we need to support guest checkout. We're losing a lot of users who don't want to create an account just to buy something.
+
+[00:04:58]
+David: Guest checkout is tricky because a lot of our backend assumes an authenticated user. Order history, for example — where does a guest order go?
+
+[00:05:10]
+Marcus: We could tie it to email address. If they later create an account with that email, we link the orders.
+
+[00:05:18]
+Sarah: That's exactly what Amazon does. Let's do that.
+
+[00:05:24]
+David: Okay, but that's going to need some backend work. Marcus, you should probably spike on that first to see what's involved.
+
+[00:05:33]
+Marcus: Yeah, I can do a spike. Maybe two days to map out the changes needed.
+
+[00:05:40]
+Sarah: Perfect. So guest checkout is dependent on that spike.
+
+[00:05:48]
+Lisa: Oh, I almost forgot — we need to support promo codes. The current promo code field is buried in the cart, but it should be prominent during checkout.
+
+[00:06:00]
+David: The promo service is actually being rewritten by the promotions team right now. I'm not sure what the timeline is.
+
+[00:06:08]
+Sarah: Let me check with them. Worst case we keep the current integration. But let's plan for a new promo code UI component — we can wire it up to whichever service is ready.
+
+[00:06:22]
+Priya: So we're building the UI but the integration is TBD?
+
+[00:06:27]
+Sarah: Right. The UI component is in scope, the backend integration might need to wait.
+
+[00:06:35]
+David: Speaking of backend — Marcus, we've had reports of orders being placed twice. Have you looked into that?
+
+[00:06:45]
+Marcus: Yeah, I've been investigating. It seems like a race condition when users double-click the place order button. We don't have proper idempotency.
+
+[00:06:58]
+Sarah: That's a bug we need to fix regardless of the redesign. Can we prioritize that?
+
+[00:07:05]
+David: Definitely. Marcus, make that your top priority after the guest checkout spike.
+
+[00:07:12]
+Marcus: Got it. I'll need to add an idempotency key to the order creation API. It's maybe a day of work plus testing.
+
+[00:07:22]
+Lisa: From a UX perspective, we should also disable the button after the first click and show a loading state.
+
+[00:07:30]
+Priya: Yeah, that's a quick fix. I can do that as part of the new checkout page.
+
+[00:07:38]
+Sarah: Perfect. What about mobile? The new design needs to work on mobile too, right?
+
+[00:07:45]
+Lisa: Absolutely. It's designed mobile-first actually. The single-page layout works better on mobile than the multi-step — less tapping, less loading.
+
+[00:07:55]
+Priya: Are we supporting tablet separately or is it just responsive?
+
+[00:08:00]
+Lisa: Responsive. Three breakpoints: mobile, tablet, desktop. I'll share the Figma with the exact breakpoints.
+
+[00:08:10]
+David: Okay let me try to summarize what we've got. Features: single-page checkout, auto-populated customer data, guest checkout pending spike, inline validation, promo code UI. Bug fix: double-order prevention. Tech debt: we mentioned the Redux cart state earlier.
+
+[00:08:35]
+Sarah: Should we tackle the Redux thing this sprint?
+
+[00:08:40]
+David: I think we have to. The current state management is going to make the single-page checkout really painful to build. Everything's coupled.
+
+[00:08:50]
+Priya: I agree. If we're touching all this checkout code anyway, now is the time to clean it up.
+
+[00:08:58]
+David: Okay, let's add a tech debt ticket for migrating the cart state to something more modern. Priya, you know this code best — how long?
+
+[00:09:08]
+Priya: If we go with Zustand, maybe three days. It's a pretty contained change once you understand the current flow.
+
+[00:09:18]
+Sarah: Is that blocking the checkout work or can it happen in parallel?
+
+[00:09:24]
+Priya: It should happen first, honestly. Building the new checkout on top of the old Redux setup is asking for trouble.
+
+[00:09:32]
+David: Agreed. So the order is: component audit, then Redux migration, then the checkout features.
+
+[00:09:42]
+Marcus: And my spike on guest checkout can happen in parallel since it's backend work.
+
+[00:09:48]
+Sarah: What about timelines? We have two weeks for this sprint.
+
+[00:09:55]
+David: Let me think... Component audit is 2 days, Redux migration is 3 days, that's already a week. The actual checkout implementation...
+
+[00:10:08]
+Priya: I think the frontend work is at least 5 days for the basic flow. Add another 2-3 days for inline validation and error handling.
+
+[00:10:18]
+David: So we're looking at 10-11 days of frontend work alone. That's tight for a two-week sprint.
+
+[00:10:28]
+Sarah: What if we descope something? What's the minimum viable checkout we could ship?
+
+[00:10:36]
+Lisa: The single-page layout is the core value. Everything else is enhancement.
+
+[00:10:42]
+David: What about guest checkout? That's significant backend work.
+
+[00:10:48]
+Sarah: Guest checkout is important for conversion... but you're right, it might be too much for this sprint.
+
+[00:10:56]
+Marcus: What if we do the spike this sprint, and implementation next sprint? That way we're unblocked and can plan properly.
+
+[00:11:05]
+Sarah: That works. Guest checkout implementation moves to next sprint, but the spike happens now so we know what we're dealing with.
+
+[00:11:15]
+David: Same question for the promo code UI — in or out?
+
+[00:11:20]
+Sarah: Let's keep it in but make it a stretch goal. If we have time, great. If not, it can slip.
+
+[00:11:28]
+Lisa: Fine by me. I'd rather we nail the core checkout than rush everything.
+
+[00:11:35]
+David: Okay I think we have a plan. Let me create the tickets after this meeting. Anything else?
+
+[00:11:45]
+Sarah: One more thing — analytics. We need to track the new checkout funnel so we can measure improvement.
+
+[00:11:52]
+Marcus: What events do you need?
+
+[00:11:55]
+Sarah: Step completion — so when they finish shipping info, when they finish payment, when they place order. And time spent on each section.
+
+[00:12:08]
+Priya: We should also track validation errors. Which fields are giving people trouble.
+
+[00:12:15]
+Sarah: Yes, good call. We can use that to improve the UX over time.
+
+[00:12:22]
+David: Alright, I'll make sure analytics is included in the checkout ticket. Marcus, can you work with the data team on the backend events?
+
+[00:12:32]
+Marcus: Sure. I'll set up a meeting with them.
+
+[00:12:38]
+Sarah: Great. I think we're done. Thanks everyone!
+
+[00:12:42]
+David: Thanks. I'll have tickets in Jira by end of day.
+
+[00:12:47]
+END OF MEETING
