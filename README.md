@@ -8,6 +8,8 @@ A CLI tool that processes meeting transcripts through a 4-stage
 Claude Code pipeline to generate structured tickets with acceptance
 criteria, confidence scoring, and open questions.
 
+Created by [Matt Wozniak](https://www.linkedin.com/in/matthew-wozniak/)
+
 ![Node 22+](https://img.shields.io/badge/node-%3E%3D22-brightgreen)
 ![TypeScript Strict](https://img.shields.io/badge/typescript-strict-blue)
 ![Powered by Claude Code](https://img.shields.io/badge/powered%20by-Claude%20Code-blueviolet)
@@ -34,9 +36,14 @@ stages.
 
 - **Node.js 22+**
 - **Claude Code** installed and authenticated (`claude --version`)
-- **pnpm** package manager
 
 ## Install
+
+```bash
+npm install -g clairifai
+```
+
+Or build from source:
 
 ```bash
 git clone https://github.com/LtShibby/CLAiRIFAi.git
@@ -50,7 +57,7 @@ pnpm build
 ### Interactive Mode (recommended)
 
 ```bash
-pnpm start
+clairifai
 ```
 
 This launches the interactive menu:
@@ -69,23 +76,37 @@ What would you like to do?
    Continue a previous run
    Push tickets to GitHub/Jira
    View run history
+   Help
    Exit
 ```
+
+### Selecting a Transcript
+
+When you choose "Process a new transcript", you can either:
+
+- **[B] Browse for file** — opens your OS native file picker (Windows, macOS, Linux)
+- **[T] Type a path** — paste or type the file path directly
 
 ### Direct Commands
 
 ```bash
 # Process a transcript directly
-pnpm start process path/to/transcript.txt
+clairifai process path/to/transcript.txt
 
 # Continue a previous run
-pnpm start continue 2026-03-16T10-22-00-sprint-planning
+clairifai continue 2026-03-16T10-22-00-sprint-planning
 
 # Push tickets from a completed run
-pnpm start push 2026-03-16T10-22-00-sprint-planning
+clairifai push 2026-03-16T10-22-00-sprint-planning
+
+# Show help
+clairifai help
+
+# Show version
+clairifai --version
 
 # Legacy (backward compatible)
-pnpm start path/to/transcript.txt
+clairifai path/to/transcript.txt
 ```
 
 ### Supported Transcript Formats
@@ -93,6 +114,7 @@ pnpm start path/to/transcript.txt
 - **Plain text** — `Speaker: dialogue`
 - **SRT** — SubRip subtitle format
 - **VTT** — WebVTT subtitle format
+- **Markdown** — `.md` files
 
 ---
 
@@ -120,26 +142,26 @@ pnpm start path/to/transcript.txt
                 │ Main Menu │        │
                 └─────┬─────┘        │
                       │              │
-        ┌────┬────┬───┴───┐          │
-        │    │    │       │          │
-        ▼    ▼    ▼       ▼          ▼
-     Process  Continue  Push  History
+        ┌────┬────┬───┴───┬────┐     │
+        │    │    │       │    │     │
+        ▼    ▼    ▼       ▼    ▼     ▼
+     Process  Continue  Push  History  Help
 ```
 
 ### Flow 1: Process New Transcript
 
 ```text
-Transcript ──▶ PARSE ──▶ EXTRACT ──▶ CLARIFY ──▶ GENERATE
-                 │          │           │            │
-                 ▼          ▼           ▼            ▼
-              Segments   Tickets    Reviewed      report.md
-              (JSON)     (JSON)     (JSON)        (Markdown)
-                 │          │           │            │
-                 └──────────┴───────────┴────────────┘
-                                  │
-                                  ▼
-                        .clairifai/runs/<id>/
-                        (all outputs versioned)
+Select File ──▶ PARSE ──▶ EXTRACT ──▶ CLARIFY ──▶ GENERATE
+  │                │          │           │            │
+  ▼                ▼          ▼           ▼            ▼
+[B] Browse      Segments   Tickets    Reviewed      report.md
+[T] Type path   (JSON)     (JSON)     (JSON)        (Markdown)
+                   │          │           │            │
+                   └──────────┴───────────┴────────────┘
+                                    │
+                                    ▼
+                          .clairifai/runs/<id>/
+                          (all outputs versioned)
 ```
 
 ### Flow 2: Continue Previous Run
@@ -233,8 +255,9 @@ Auto-generated with defaults on first run.
 
 ## Features
 
-- **Interactive menu** — Arrow-key driven UI, 5 main flows
+- **Interactive menu** — Arrow-key driven UI with 6 options
 - **4-stage pipeline** — Parse → Extract → Clarify → Generate
+- **Native file browser** — Browse for files or type/paste a path
 - **Large transcript support** — Auto-condenses parse prompt for
   transcripts over 30k characters to stay within output limits
 - **Confidence scoring** — HIGH / MEDIUM / LOW with factors
@@ -245,7 +268,10 @@ Auto-generated with defaults on first run.
 - **Push to GitHub** — Labeled issues from any completed run
 - **Run history** — Browse past runs with stats
 - **Interactive retry** — Retry with extended timeout or abort
+- **Built-in help** — `clairifai help` or Help menu option
+- **Version check** — `clairifai --version`
 - **Ink terminal UI** — Real-time progress, streaming output
+- **Cross-platform** — Windows, macOS, and Linux
 - **Injection protection** — External content in XML data tags
 
 ## Architecture
@@ -301,12 +327,14 @@ src/
     RunHistory.tsx       # Read-only run history table
     ContinueFlow.tsx     # Answer questions + re-run
     PushOptions.tsx      # Target selection + push
+    HelpScreen.tsx       # Help / about screen
     StageRow.tsx         # Per-stage status row
     LiveLog.tsx          # Streaming output panel
     QuestionPrompt.tsx   # Interactive Q&A
     TicketPreview.tsx    # Final ticket review
     RetryPrompt.tsx      # Timeout/failure recovery
-    TranscriptInput.tsx  # File path input
+    TranscriptInput.tsx  # File selection (browse or type)
+    file-picker.ts       # Native OS file dialog
   github/
     issues.ts            # GitHub Issue creation
 ```
@@ -317,4 +345,4 @@ MIT
 
 ---
 
-Powered by Claude Code
+Created by [Matt Wozniak](https://www.linkedin.com/in/matthew-wozniak/) • Powered by Claude Code
