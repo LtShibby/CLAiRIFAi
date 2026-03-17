@@ -181,12 +181,14 @@ function InteractiveApp({ config }: { config: ClairifaiConfig }) {
 
 // ─── Welcome wrapper ───
 
-function showWelcome(): Promise<void> {
+import type { ClaudeConnectivity } from './types.js';
+
+function showWelcome(): Promise<ClaudeConnectivity | null> {
 	return new Promise(resolve => {
 		const { unmount } = render(
-			<Welcome onContinue={() => {
+			<Welcome onContinue={(connectivity) => {
 				unmount();
-				resolve();
+				resolve(connectivity);
 			}} />,
 		);
 	});

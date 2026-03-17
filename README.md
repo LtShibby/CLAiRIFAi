@@ -1,6 +1,6 @@
 # CLAiRiFAi
 
-![CLAiRiFAi Banner](assets/CLAiRIFAi-banner.png)
+![CLAiRiFAi Banner](https://raw.githubusercontent.com/LtShibby/CLAiRIFAi/main/assets/CLAiRIFAi-banner.png)
 
 Meeting transcripts → Engineer-ready tickets
 
@@ -69,6 +69,8 @@ This launches the interactive menu:
 ██║     ██║     ██╔══██║██║██╔══██╗██║██╔══╝  ██╔══██║██║
 ╚██████╗███████╗██║  ██║██║██║  ██║██║██║     ██║  ██║██║
  ╚═════╝╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═╝╚═╝     ╚═╝  ╚═╝╚═╝
+
+✔ Claude CLI connected (1.0.20)
 
 What would you like to do?
 
@@ -255,6 +257,7 @@ Auto-generated with defaults on first run.
 
 ## Features
 
+- **Startup connectivity check** — Validates Claude CLI and auth on launch
 - **Interactive menu** — Arrow-key driven UI with 6 options
 - **4-stage pipeline** — Parse → Extract → Clarify → Generate
 - **Native file browser** — Browse for files or type/paste a path
@@ -313,6 +316,7 @@ src/
     watcher.ts           # Stdout collector
     json-extractor.ts    # Robust JSON extraction
     prompt.ts            # Injection protection helpers
+    transcript-validator.ts  # Format detection + word count estimation
     stages/              # Per-stage prompt builders
     schemas/             # Zod schemas for stage outputs
   state/

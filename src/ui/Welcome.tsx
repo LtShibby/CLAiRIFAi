@@ -1,17 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { createRequire } from 'node:module';
+import { validateClaude } from '../preflight.js';
+import type { ClaudeConnectivity } from '../types.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../../package.json') as { version: string };
 
 type WelcomeProps = {
-	onContinue: () => void;
+	onContinue: (connectivity: ClaudeConnectivity | null) => void;
 };
 
 export function Welcome({ onContinue }: WelcomeProps) {
+	const [connectivity, setConnectivity] = useState<ClaudeConnectivity | null>(null);
+	const [checking, setChecking] = useState(true);
+
+	useEffect(() => {
+		let cancelled = false;
+		validateClaude().then(result => {
+			if (!cancelled) {
+				setConnectivity(result);
+				setChecking(false);
+			}
+		});
+		return () => { cancelled = true; };
+	}, []);
+
 	useInput(() => {
-		onContinue();
+		onContinue(connectivity);
 	});
 
 	return (
@@ -29,6 +45,26 @@ export function Welcome({ onContinue }: WelcomeProps) {
 				<Text>CLAiRiFAi <Text color="#1a3a6b">v{pkg.version}</Text> — Transcripts → Engineer-ready tickets</Text>
 				<Text dimColor>Claude Code pipeline • Confidence scoring • Open questions</Text>
 				<Text color="#ff8c00">Created by <Text bold color="#ff8c00">Matt Wozniak</Text></Text>
+			</Box>
+
+			<Box flexDirection="column" marginTop={1}>
+				{checking ? (
+					<Text dimColor>⟳ Checking Claude connectivity...</Text>
+				) : connectivity && connectivity.cliFound && connectivity.authenticated ? (
+					<>
+						<Text color="green">✔ Claude CLI connected{connectivity.cliVersion ? ` (${connectivity.cliVersion})` : ''}</Text>
+						{connectivity.latencyMs !== null && (
+							<Text dimColor>  Response latency: {(connectivity.latencyMs / 1000).toFixed(1)}s</Text>
+						)}
+					</>
+				) : connectivity?.error ? (
+					<>
+						<Text color="red">✖ {connectivity.error.message}</Text>
+						{connectivity.error.suggestion && (
+							<Text color="yellow">  → {connectivity.error.suggestion}</Text>
+						)}
+					</>
+				) : null}
 			</Box>
 
 			<Box marginTop={1}>

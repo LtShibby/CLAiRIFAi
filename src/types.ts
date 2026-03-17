@@ -239,6 +239,16 @@ export type RunSummary = {
 
 // ─── Error types ───
 
+// ─── Claude connectivity ───
+
+export type ClaudeConnectivity = {
+	cliFound: boolean;
+	cliVersion: string | null;
+	authenticated: boolean;
+	latencyMs: number | null;
+	error: ClairifaiError | null;
+};
+
 export type ErrorCode =
 	| 'CLAUDE_NOT_FOUND'
 	| 'CLAUDE_AUTH_FAILED'

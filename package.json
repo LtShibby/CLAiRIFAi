@@ -1,6 +1,6 @@
 {
 	"name": "clairifai",
-	"version": "0.1.6",
+	"version": "0.1.7",
 	"description": "CLI tool that processes meeting transcripts into engineer-ready tickets via a 4-stage pipeline",
 	"type": "module",
 	"files": [
@@ -12,10 +12,7 @@
 	"scripts": {
 		"build": "tsc",
 		"dev": "tsc --watch",
-		"start": "node dist/index.js",
-		"test:unit": "node --test dist/**/*.test.js",
-		"test:snapshot": "node --test dist/tests/snapshot.test.js",
-		"test:integration": "node --test dist/tests/integration.test.js"
+		"start": "node dist/index.js"
 	},
 	"engines": {
 		"node": ">=22.0.0"
@@ -38,10 +35,5 @@
 		"@types/node": "^22.0.0",
 		"@types/react": "^18.3.0",
 		"typescript": "^5.7.0"
-	},
-	"pnpm": {
-		"onlyBuiltDependencies": [
-			"sharp"
-		]
 	}
 }

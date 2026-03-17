@@ -1,7 +1,44 @@
 import { execSync } from 'node:child_process';
 import { stat } from 'node:fs/promises';
 import { createError } from './errors.js';
-import type { ClairifaiConfig, ClairifaiError } from './types.js';
+import type { ClairifaiConfig, ClairifaiError, ClaudeConnectivity } from './types.js';
+
+/**
+ * Standalone Claude connectivity check — runs async, no transcript required.
+ * Used by the Welcome screen to surface problems early.
+ */
+export async function validateClaude(): Promise<ClaudeConnectivity> {
+	const result: ClaudeConnectivity = {
+		cliFound: false,
+		cliVersion: null,
+		authenticated: false,
+		latencyMs: null,
+		error: null,
+	};
+
+	// 1. Check CLI exists
+	try {
+		const versionOutput = execSync('claude --version', { encoding: 'utf8', timeout: 5000 }).trim();
+		result.cliFound = true;
+		result.cliVersion = versionOutput;
+	} catch {
+		result.error = createError('CLAUDE_NOT_FOUND');
+		return result;
+	}
+
+	// 2. Check auth + measure latency
+	try {
+		const start = Date.now();
+		execSync('claude --print "ping"', { stdio: 'ignore', timeout: 15000 });
+		result.latencyMs = Date.now() - start;
+		result.authenticated = true;
+	} catch {
+		result.error = createError('CLAUDE_AUTH_FAILED');
+		return result;
+	}
+
+	return result;
+}
 
 export async function runPreflightChecks(
 	transcriptPath: string,
