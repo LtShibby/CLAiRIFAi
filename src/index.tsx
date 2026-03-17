@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { render, useApp, Text } from 'ink';
 import { readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { loadConfig } from './config.js';
 import { runPreflightChecks, validateTranscript } from './preflight.js';
 import { formatError } from './errors.js';
@@ -207,11 +208,18 @@ async function main() {
 		process.exit(1);
 	}
 
+	const [,, command, arg] = process.argv;
+
+	if (command === '--version' || command === '-v') {
+		const require = createRequire(import.meta.url);
+		const pkg = require('../package.json') as { version: string };
+		console.log(`clairifai v${pkg.version}`);
+		process.exit(0);
+	}
+
 	await showWelcome();
 
 	const config = await loadConfig();
-
-	const [,, command, arg] = process.argv;
 
 	if (command === 'help' || command === '--help' || command === '-h') {
 		// clairifai help
