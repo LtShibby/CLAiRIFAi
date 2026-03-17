@@ -341,7 +341,7 @@ src/
 
 ## License
 
-MIT
+VallySeed
 
 ---
 

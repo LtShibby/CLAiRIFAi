@@ -27,7 +27,7 @@
 		"claude",
 		"ai"
 	],
-	"license": "MIT",
+	"license": "VallySeed",
 	"dependencies": {
 		"@octokit/rest": "^21.1.0",
 		"ink": "^5.1.0",
