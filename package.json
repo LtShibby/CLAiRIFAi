@@ -1,6 +1,6 @@
 {
 	"name": "clairifai",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "CLI tool that processes meeting transcripts into engineer-ready tickets via a 4-stage pipeline",
 	"type": "module",
 	"files": [
