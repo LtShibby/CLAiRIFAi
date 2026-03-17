@@ -3,6 +3,9 @@
 	"version": "0.1.0",
 	"description": "CLI tool that processes meeting transcripts into engineer-ready tickets via a 4-stage pipeline",
 	"type": "module",
+	"files": [
+		"dist"
+	],
 	"bin": {
 		"clairifai": "./dist/index.js"
 	},

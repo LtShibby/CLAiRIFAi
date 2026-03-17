@@ -16,6 +16,7 @@ import { RunHistory } from './ui/RunHistory.js';
 import { PushOptions } from './ui/PushOptions.js';
 import { ContinueFlow } from './ui/ContinueFlow.js';
 import { TranscriptInput } from './ui/TranscriptInput.js';
+import { HelpScreen } from './ui/HelpScreen.js';
 
 // ─── Interactive App (menu-driven) ───
 
@@ -27,7 +28,8 @@ type Screen =
 	| { type: 'continue-flow'; run: RunSummary }
 	| { type: 'push-loading'; run: RunSummary }
 	| { type: 'push-options'; run: RunSummary; extracted: ExtractionResult; reviewed: ClarifyResult }
-	| { type: 'history' };
+	| { type: 'history' }
+	| { type: 'help' };
 
 function InteractiveApp({ config }: { config: ClairifaiConfig }) {
 	const { exit } = useApp();
@@ -47,6 +49,9 @@ function InteractiveApp({ config }: { config: ClairifaiConfig }) {
 				break;
 			case 'history':
 				setScreen({ type: 'history' });
+				break;
+			case 'help':
+				setScreen({ type: 'help' });
 				break;
 			case 'exit':
 				exit();
@@ -167,6 +172,9 @@ function InteractiveApp({ config }: { config: ClairifaiConfig }) {
 
 		case 'history':
 			return <RunHistory onBack={() => setScreen({ type: 'menu' })} />;
+
+		case 'help':
+			return <HelpScreen onBack={() => setScreen({ type: 'menu' })} />;
 	}
 }
 
@@ -205,7 +213,11 @@ async function main() {
 
 	const [,, command, arg] = process.argv;
 
-	if (command === 'process' && arg) {
+	if (command === 'help' || command === '--help' || command === '-h') {
+		// clairifai help
+		const { waitUntilExit } = render(<HelpScreen onBack={() => process.exit(0)} />);
+		await waitUntilExit();
+	} else if (command === 'process' && arg) {
 		// clairifai process <transcript>
 		await runDirectPipeline(arg, config);
 	} else if (command === 'continue' && arg) {
@@ -214,7 +226,7 @@ async function main() {
 	} else if (command === 'push' && arg) {
 		// clairifai push <run-id>
 		await runPushFlow(arg, config);
-	} else if (command && command !== 'process' && command !== 'continue' && command !== 'push') {
+	} else if (command && command !== 'process' && command !== 'continue' && command !== 'push' && command !== 'help' && command !== '--help' && command !== '-h') {
 		// Legacy: clairifai <transcript> (backward compatible)
 		await runDirectPipeline(command, config);
 	} else {

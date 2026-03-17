@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 
-export type MenuChoice = 'process' | 'continue' | 'push' | 'history' | 'exit';
+export type MenuChoice = 'process' | 'continue' | 'push' | 'history' | 'help' | 'exit';
 
 type MainMenuProps = {
 	onSelect: (choice: MenuChoice) => void;
@@ -12,6 +12,7 @@ const MENU_ITEMS: { key: MenuChoice; label: string; description: string }[] = [
 	{ key: 'continue', label: 'Continue a previous run', description: 'Answer open questions and re-generate tickets' },
 	{ key: 'push', label: 'Push tickets to GitHub/Jira', description: 'Create issues from a completed run' },
 	{ key: 'history', label: 'View run history', description: 'Browse all past pipeline runs' },
+	{ key: 'help', label: 'Help', description: 'Learn how CLAiRiFAi works' },
 	{ key: 'exit', label: 'Exit', description: '' },
 ];
 
